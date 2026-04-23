@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+    <class>MainWindow</class>
+    <widget class="QMainWindow" name="MainWindow">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>1000</width>
+                <height>620</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>Inspection Camera GUI</string>
+        </property>
+
+        <widget class="QWidget" name="centralwidget">
+            <widget class="QFrame" name="messageFrame">
+                <property name="geometry">
+                    <rect>
+                        <x>90</x>
+                        <y>60</y>
+                        <width>420</width>
+                        <height>80</height>
+                    </rect>
+                </property>
+                <property name="styleSheet">
+                    <string notr="true">QFrame {
+                        background-color: rgba(150, 156, 214, 0.35);
+                        border: 3px solid black;
+                        }
+                        QLabel {
+                        color: black;
+                        font: 18pt &quot;Arial&quot;;
+                        font-weight: bold;
+                        }</string>
+                </property>
+                <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                </property>
+                <widget class="QLabel" name="messageLabel">
+                    <property name="geometry">
+                        <rect>
+                            <!-- <x>20</x> -->
+                            <!-- <y>20</y> -->
+                            <x>10</x>
+                            <y>10</y>
+                            <width>400</width>
+                            <height>60</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Waiting for inspection result...</string>
+                    </property>
+                    <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                    </property>
+                </widget>
+            </widget>
+            <widget class="QPushButton" name="startButton">
+                <property name="geometry">
+                    <rect>
+                        <x>570</x>
+                        <y>70</y>
+                        <width>90</width>
+                        <height>45</height>
+                    </rect>
+                </property>
+                <property name="styleSheet">
+                    <string notr="true">QPushButton {
+                        background-color: rgb(247, 237, 0);
+                        border: 4px solid black;
+                        font: 14pt &quot;Arial&quot;;
+                        font-weight: bold;
+                        }
+                        QPushButton:pressed {
+                        background-color: rgb(220, 210, 0);
+                        }</string>
+                </property>
+                <property name="text">
+                    <string>Start</string>
+                </property>
+            </widget>
+            <widget class="QPushButton" name="stopButton">
+                <property name="geometry">
+                    <rect>
+                        <x>570</x>
+                        <y>125</y>
+                        <width>90</width>
+                        <height>45</height>
+                    </rect>
+                </property>
+                <property name="styleSheet">
+                    <string notr="true">QPushButton {
+                        background-color: rgb(247, 237, 0);
+                        border: 4px solid black;
+                        font: 14pt &quot;Arial&quot;;
+                        font-weight: bold;
+                        }
+                        QPushButton:pressed {
+                        background-color: rgb(220, 210, 0);
+                        }</string>
+                </property>
+                <property name="text">
+                    <string>Stop</string>
+                </property>
+            </widget>
+            <widget class="QFrame" name="cameraFrame">
+                <property name="geometry">
+                    <rect>
+                        <x>100</x>
+                        <y>180</y>
+                        <width>540</width>
+                        <height>260</height>
+                    </rect>
+                </property>
+                <property name="styleSheet">
+                    <string notr="true">QFrame {
+                        background-color: rgb(40, 180, 70);
+                        border: 4px solid black;
+                        }
+                        QLabel {
+                        color: black;
+                        font: 24pt &quot;Arial&quot;;
+                        font-weight: bold;
+                        }</string>
+                </property>
+                <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                </property>
+                <widget class="QLabel" name="imageLabel">
+                    <property name="geometry">
+                        <rect>
+                            <x>0</x>
+                            <y>0</y>
+                            <width>540</width>
+                            <height>260</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Real Image</string>
+                    </property>
+                    <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                    </property>
+                </widget>
+            </widget>
+        </widget>
+
+        <widget class="QMenuBar" name="menubar">
+            <property name="geometry">
+                <rect>
+                    <x>0</x>
+                    <y>0</y>
+                    <width>1000</width>
+                    <height>26</height>
+                </rect>
+            </property>
+        </widget>
+        <widget class="QStatusBar" name="statusbar" />
+    </widget>
+    <resources />
+    <connections />
+</ui>
