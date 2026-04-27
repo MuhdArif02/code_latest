@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Inspection Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --panel: #10141c;
+    --border: #1e2535;
+    --accent-pass: #00dc50;
+    --accent-reject: #ff2d2d;
+    --accent-no: #00a8ff;
+    --text: #c8d4e8;
+    --muted: #4a5568;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 32px; height: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 3px;
+  }
+  .logo-icon span { background: var(--accent-no); border-radius: 1px; animation: pulse-icon 2s ease-in-out infinite; }
+  .logo-icon span:nth-child(2),
+  .logo-icon span:nth-child(4),
+  .logo-icon span:nth-child(6) { background: transparent; border: 1px solid var(--accent-no); }
+  @keyframes pulse-icon { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .logo h1 { font-family: var(--mono); font-size: 16px; letter-spacing: 2px; color: var(--accent-no); text-transform: uppercase; }
+  .logo span { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+
+  .header-right { display: flex; align-items: center; gap: 20px; }
+
+  .ws-status { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: background .3s; }
+  .ws-dot.connected    { background: var(--accent-pass); box-shadow: 0 0 8px var(--accent-pass); }
+  .ws-dot.disconnected { background: var(--accent-reject); }
+
+  .controls { display: flex; gap: 8px; }
+  .btn {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
+    padding: 6px 16px; border: 1px solid; border-radius: 2px;
+    cursor: pointer; background: transparent; text-transform: uppercase; transition: all .15s;
+  }
+  .btn-start { border-color: var(--accent-pass); color: var(--accent-pass); }
+  .btn-start:hover { background: var(--accent-pass); color: #000; }
+  .btn-stop  { border-color: var(--accent-reject); color: var(--accent-reject); }
+  .btn-stop:hover  { background: var(--accent-reject); color: #fff; }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: auto 1fr;
+    gap: 1px;
+    flex: 1;
+    background: var(--border);
+  }
+
+  /* VERDICT BANNER */
+  .verdict-banner {
+    grid-column: 1 / -1;
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 72px;
+    position: relative;
+    overflow: hidden;
+    transition: background .4s;
+  }
+  .verdict-banner::after {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--current-color, var(--accent-no));
+    transition: background .3s;
+  }
+  .verdict-text { font-family: var(--mono); font-size: 26px; font-weight: bold; letter-spacing: 4px; transition: color .3s; }
+  .verdict-sub  { font-size: 13px; color: var(--muted); margin-top: 3px; font-family: var(--mono); letter-spacing: 1px; }
+  .verdict-qr   { font-family: var(--mono); font-size: 13px; color: var(--text); text-align: right; max-width: 420px; word-break: break-all; }
+  .verdict-qr .label { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* CAMERA */
+  .camera-panel {
+    background: #000; display: flex; align-items: center; justify-content: center;
+    position: relative; min-height: 400px;
+  }
+  .camera-panel img { max-width: 100%; max-height: 100%; display: block; object-fit: contain; }
+  .camera-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; flex-direction: column; gap: 12px;
+    color: var(--muted); font-family: var(--mono); font-size: 13px; pointer-events: none;
+  }
+  .camera-overlay.hidden { display: none; }
+  .spinner {
+    width: 36px; height: 36px; border: 2px solid var(--border);
+    border-top-color: var(--accent-no); border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .corner { position: absolute; width: 24px; height: 24px; border-color: var(--muted); border-style: solid; opacity: .4; }
+  .corner.tl { top: 12px;    left: 12px;  border-width: 2px 0 0 2px; }
+  .corner.tr { top: 12px;    right: 12px; border-width: 2px 2px 0 0; }
+  .corner.bl { bottom: 12px; left: 12px;  border-width: 0 0 2px 2px; }
+  .corner.br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+  /* METRICS PANEL */
+  .metrics-panel { background: var(--panel); display: flex; flex-direction: column; overflow-y: auto; }
+  .panel-section { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+  .panel-section h3 { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+
+  .metric-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .metric-label { font-size: 12px; color: var(--muted); font-family: var(--mono); letter-spacing: .5px; }
+  .metric-value { font-family: var(--mono); font-size: 13px; color: var(--text); }
+
+  .metric-bar-wrap { margin-bottom: 12px; }
+  .metric-bar-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-family: var(--mono); font-size: 11px; }
+  .metric-bar-header .name { color: var(--muted); }
+  .metric-bar-header .val  { color: var(--text); }
+  .bar-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 2px; transition: width .3s ease, background .3s; }
+
+  .tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 2px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid; }
+  .tag-pass   { color: var(--accent-pass);   border-color: var(--accent-pass);   background: rgba(0,220,80,.08); }
+  .tag-reject { color: var(--accent-reject); border-color: var(--accent-reject); background: rgba(255,45,45,.08); }
+  .tag-no     { color: var(--accent-no);     border-color: var(--accent-no);     background: rgba(0,168,255,.08); }
+  .tag-on     { color: var(--accent-pass);   border-color: var(--accent-pass);   background: rgba(0,220,80,.08); }
+  .tag-off    { color: var(--muted);         border-color: var(--muted);         background: transparent; }
+
+  /* STATUS BAR */
+  .statusbar {
+    grid-column: 1 / -1;
+    background: var(--panel); border-top: 1px solid var(--border);
+    padding: 6px 24px; display: flex; gap: 28px; align-items: center;
+    font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .5px;
+  }
+  .statusbar .item { display: flex; gap: 6px; }
+  .statusbar .item .k { color: var(--border); }
+  .statusbar .item .v { color: var(--text); }
+
+  .state-pass   { --current-color: var(--accent-pass);   color: var(--accent-pass);   }
+  .state-reject { --current-color: var(--accent-reject); color: var(--accent-reject); }
+  .state-no     { --current-color: var(--accent-no);     color: var(--accent-no);     }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+    <div>
+      <h1>QR Inspect</h1>
+      <span>Visual Inspection System</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="ws-status">
+      <div class="ws-dot disconnected" id="wsDot"></div>
+      <span id="wsLabel">DISCONNECTED</span>
+    </div>
+    <div class="controls">
+      <button class="btn btn-start" onclick="startCamera()">▶ Start</button>
+      <button class="btn btn-stop"  onclick="stopCamera()">■ Stop</button>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="verdict-banner state-no" id="verdictBanner">
+    <div>
+      <div class="verdict-text" id="verdictText">WAITING</div>
+      <div class="verdict-sub"  id="verdictSub">Connect camera to begin inspection</div>
+    </div>
+    <div class="verdict-qr" id="verdictQr" style="display:none">
+      <div class="label">Decoded Data</div>
+      <div id="qrDataText"></div>
+    </div>
+  </div>
+
+  <div class="camera-panel" id="cameraPanel">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="camera-overlay" id="cameraOverlay">
+      <div class="spinner"></div>
+      <span>Awaiting feed...</span>
+    </div>
+    <img id="cameraFeed" src="" alt="" style="display:none;width:100%;height:100%;object-fit:contain;">
+  </div>
+
+  <div class="metrics-panel">
+
+    <div class="panel-section">
+      <h3>Inspection Result</h3>
+      <div class="metric-row">
+        <span class="metric-label">Status</span>
+        <span class="tag tag-no" id="statusTag">NO QR</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Error Type</span>
+        <span class="metric-value" id="errorType">—</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Confidence</span>
+        <span class="metric-value" id="confidence">—</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Image Quality</h3>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar-header"><span class="name">Blur (Laplacian)</span><span class="val" id="blurVal">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="blurBar" style="width:0%;background:var(--accent-no)"></div></div>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar-header"><span class="name">Dynamic Range</span><span class="val" id="dynVal">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="dynBar" style="width:0%;background:var(--accent-no)"></div></div>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar-header"><span class="name">Bimodal Ratio</span><span class="val" id="bimodalVal">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="bimodalBar" style="width:0%;background:var(--accent-no)"></div></div>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar-header"><span class="name">Solidity</span><span class="val" id="solidityVal">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="solidityBar" style="width:0%;background:var(--accent-no)"></div></div>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar-header"><span class="name">Mean Saturation</span><span class="val" id="satVal">—</span></div>
+        <div class="bar-track"><div class="bar-fill" id="satBar" style="width:0%;background:var(--accent-no)"></div></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Geometry</h3>
+      <div class="metric-row"><span class="metric-label">Angle (raw)</span><span class="metric-value" id="angleVal">—</span></div>
+      <div class="metric-row"><span class="metric-label">Angle (norm)</span><span class="metric-value" id="normAngleVal">—</span></div>
+      <div class="metric-row"><span class="metric-label">Size (W × H)</span><span class="metric-value" id="sizeVal">—</span></div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Preprocessing</h3>
+      <div class="metric-row"><span class="metric-label">Retinex</span><span class="tag tag-off" id="retinexTag">OFF</span></div>
+      <div class="metric-row"><span class="metric-label">Brightness</span><span class="metric-value" id="brightnessVal">—</span></div>
+      <div class="metric-row"><span class="metric-label">Contrast (σ)</span><span class="metric-value" id="contrastVal">—</span></div>
+    </div>
+
+    <div class="panel-section">
+      <h3>Session Stats</h3>
+      <div class="metric-row"><span class="metric-label">Total Frames</span><span class="metric-value" id="frameCount">0</span></div>
+      <div class="metric-row"><span class="metric-label">PASS</span><span class="metric-value" id="passCount" style="color:var(--accent-pass)">0</span></div>
+      <div class="metric-row"><span class="metric-label">REJECT</span><span class="metric-value" id="rejectCount" style="color:var(--accent-reject)">0</span></div>
+      <div class="metric-row"><span class="metric-label">NO QR</span><span class="metric-value" id="noCount" style="color:var(--accent-no)">0</span></div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="statusbar">
+  <div class="item"><span class="k">WS</span><span class="v" id="sbWs">—</span></div>
+  <div class="item"><span class="k">FPS</span><span class="v" id="sbFps">—</span></div>
+  <div class="item"><span class="k">LATENCY</span><span class="v" id="sbLatency">—</span></div>
+  <div class="item"><span class="k">PORT</span><span class="v" id="sbPort">—</span></div>
+</div>
+
+<script>
+  // WS_PORT is injected by the server at /config.json
+  // Falls back to auto-detect from current page host
+  let ws = null;
+  let stats = { pass: 0, reject: 0, no: 0, total: 0 };
+  let lastFrameTime = null;
+  let fpsBuffer = [];
+  let WS_PORT = null;
+
+  async function init() {
+    // Fetch port from backend so this file needs no hardcoding
+    try {
+      const cfg = await fetch('/config.json').then(r => r.json());
+      WS_PORT = cfg.ws_port;
+    } catch(e) {
+      // fallback: same port as page
+      WS_PORT = location.port || 8092;
+    }
+    document.getElementById('sbPort').textContent = WS_PORT;
+    connectWS();
+  }
+
+  function connectWS() {
+    const WS_URL = `ws://${location.hostname}:${WS_PORT}/ws`;
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      setWsDot(true);
+      document.getElementById('sbWs').textContent = WS_URL;
+    };
+    ws.onclose = () => { setWsDot(false); setTimeout(connectWS, 2000); };
+    ws.onerror = () => setWsDot(false);
+    ws.onmessage = (evt) => {
+      try { updateDashboard(JSON.parse(evt.data)); } catch(e) {}
+    };
+  }
+
+  function setWsDot(connected) {
+    document.getElementById('wsDot').className = 'ws-dot ' + (connected ? 'connected' : 'disconnected');
+    document.getElementById('wsLabel').textContent = connected ? 'CONNECTED' : 'DISCONNECTED';
+  }
+
+  function updateDashboard(d) {
+    const verdict = d.status || 'NO';
+    const metrics = d.metrics || {};
+    const now = performance.now();
+
+    // FPS
+    if (lastFrameTime !== null) {
+      const fps = 1000 / (now - lastFrameTime);
+      fpsBuffer.push(fps);
+      if (fpsBuffer.length > 10) fpsBuffer.shift();
+      document.getElementById('sbFps').textContent =
+        (fpsBuffer.reduce((a,b)=>a+b,0) / fpsBuffer.length).toFixed(1);
+    }
+    lastFrameTime = now;
+
+    // Latency
+    document.getElementById('sbLatency').textContent =
+      ((Date.now() / 1000 - d.timestamp) * 1000).toFixed(0) + 'ms';
+
+    // Session stats
+    stats.total++;
+    if (verdict === 'PASS') stats.pass++;
+    else if (verdict === 'REJECT') stats.reject++;
+    else stats.no++;
+    document.getElementById('frameCount').textContent  = stats.total;
+    document.getElementById('passCount').textContent   = stats.pass;
+    document.getElementById('rejectCount').textContent = stats.reject;
+    document.getElementById('noCount').textContent     = stats.no;
+
+    // Camera feed
+    if (d.frame) {
+      const img = document.getElementById('cameraFeed');
+      img.src = 'data:image/jpeg;base64,' + d.frame;
+      img.style.display = 'block';
+      document.getElementById('cameraOverlay').classList.add('hidden');
+    }
+
+    // Verdict banner
+    const banner = document.getElementById('verdictBanner');
+    banner.className = 'verdict-banner state-' + (verdict === 'NO' ? 'no' : verdict.toLowerCase());
+
+    const vText = document.getElementById('verdictText');
+    const vSub  = document.getElementById('verdictSub');
+    const vQr   = document.getElementById('verdictQr');
+
+    if (verdict === 'PASS') {
+      vText.textContent = '✓ PASS';
+      vSub.textContent  = 'QR Code accepted';
+      if (d.qr_data) { vQr.style.display = 'block'; document.getElementById('qrDataText').textContent = d.qr_data; }
+    } else if (verdict === 'REJECT') {
+      vText.textContent = '✗ REJECT';
+      vSub.textContent  = 'Reason: ' + (d.error_type || '—');
+      vQr.style.display = 'none';
+    } else {
+      vText.textContent = '— NO QR';
+      vSub.textContent  = 'No QR code detected in frame';
+      vQr.style.display = 'none';
+    }
+
+    // Status tag
+    const tag = document.getElementById('statusTag');
+    tag.textContent = verdict === 'NO' ? 'NO QR' : verdict;
+    tag.className   = 'tag tag-' + verdict.toLowerCase();
+
+    document.getElementById('errorType').textContent  = d.error_type || '—';
+    document.getElementById('confidence').textContent =
+      d.confidence != null ? (d.confidence * 100).toFixed(1) + '%' : '—';
+
+    // Quality bars
+    function setBar(barId, valId, value, max, warn, good) {
+      const pct = Math.min(100, (value / max) * 100);
+      const bar = document.getElementById(barId);
+      bar.style.width      = pct + '%';
+      bar.style.background = value >= good ? 'var(--accent-pass)' :
+                             value >= warn ? '#ffaa00' : 'var(--accent-reject)';
+      document.getElementById(valId).textContent =
+        value != null ? (value.toFixed ? value.toFixed(1) : value) : '—';
+    }
+
+    setBar('blurBar',    'blurVal',    metrics.blur     || 0, 200, 55,   80);
+    setBar('dynBar',     'dynVal',     metrics.dynamic  || 0, 255, 35,   80);
+    setBar('bimodalBar', 'bimodalVal', metrics.bimodal  || 0, 1,   0.45, 0.6);
+    setBar('solidityBar','solidityVal',metrics.solidity || 0, 1,   0.75, 0.9);
+    setBar('satBar',     'satVal',     metrics.sat      || 0, 100, 70,   70);
+
+    // Geometry
+    document.getElementById('angleVal').textContent =
+      metrics.angle     != null ? metrics.angle.toFixed(1)      + '°' : '—';
+    document.getElementById('normAngleVal').textContent =
+      metrics.norm_angle != null ? metrics.norm_angle.toFixed(1) + '°' : '—';
+    document.getElementById('sizeVal').textContent =
+      (metrics.w && metrics.h) ? metrics.w + ' × ' + metrics.h + ' px' : '—';
+
+    // Preprocessing
+    const rx   = d.retinex_used;
+    const rtag = document.getElementById('retinexTag');
+    rtag.textContent = rx ? 'ON' : 'OFF';
+    rtag.className   = 'tag ' + (rx ? 'tag-on' : 'tag-off');
+
+    document.getElementById('brightnessVal').textContent =
+      d.brightness != null ? d.brightness.toFixed(1) : '—';
+    document.getElementById('contrastVal').textContent =
+      d.contrast   != null ? d.contrast.toFixed(1)   : '—';
+  }
+
+  function startCamera() {
+    fetch('/camera/start', { method: 'POST' })
+      .then(r => r.json()).then(d => console.log('Start:', d.status));
+  }
+
+  function stopCamera() {
+    fetch('/camera/stop', { method: 'POST' })
+      .then(r => r.json()).then(d => {
+        console.log('Stop:', d.status);
+        document.getElementById('cameraFeed').style.display = 'none';
+        document.getElementById('cameraOverlay').classList.remove('hidden');
+        stats = { pass: 0, reject: 0, no: 0, total: 0 };
+        fpsBuffer = []; lastFrameTime = null;
+      });
+  }
+
+  init();
+</script>
+</body>
+</html>
