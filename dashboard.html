@@ -411,14 +411,33 @@
   var C_BLUE   = '#00b4e0';
 
   /* ── result display box ── */
+  // function setResultDisplay(verdict, qrData, errorType) {
+  //   var rd   = document.getElementById('resultDisplay');
+  //   var rdv  = document.getElementById('rdVerdict');
+  //   var rds  = document.getElementById('rdSub');
+  //   var rdq  = document.getElementById('rdQr');
+  //   var scan = document.getElementById('rdScan');
+  //   var resultImg = document.getElementById('resultImage');
+  //   var resultOverlay = document.getElementById('resultOverlay');
+
   function setResultDisplay(verdict, qrData, errorType) {
-    var rd   = document.getElementById('resultDisplay');
-    var rdv  = document.getElementById('rdVerdict');
-    var rds  = document.getElementById('rdSub');
-    var rdq  = document.getElementById('rdQr');
-    var scan = document.getElementById('rdScan');
-    var resultImg = document.getElementById('resultImage');
-    var resultOverlay = document.getElementById('resultOverlay');
+  var col = verdict === 'PASS' ? C_PASS :
+            verdict === 'REJECT' ? C_REJECT :
+            C_BLUE;
+
+  var rd = document.getElementById('resultDisplay');
+
+  // 🔥 FORCE BORDER COLOR
+  rd.style.border = "2px solid " + col;
+
+  // 🔥 ALSO UPDATE CORNERS
+  rd.querySelectorAll('.rd-corner').forEach(function(c){
+    c.style.borderColor = col;
+  });
+
+  // 🔥 SCAN LINE
+  document.getElementById('rdScan').style.background = col;
+  }
 
     // Keep the top-right box line fixed, so it does not keep switching colour
     rd.style.borderColor  = C_BLUE;
