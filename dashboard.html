@@ -189,12 +189,7 @@
     z-index: 0;
     opacity: .78;
   }
-  .result-overlay {
-    position: absolute; inset: 0;
-    z-index: 1;
-    background: rgba(8,12,18,.45);
-    display: none;
-  }
+  .result-overlay { display: none; }
   .result-content {
     position: relative;
     z-index: 2;
@@ -205,6 +200,11 @@
     gap: 6px;
     width: 100%;
     height: 100%;
+  }
+  /* When PASS/REJECT snapshot is captured, show clean image only */
+  .result-display.snapshot-only .result-content,
+  .result-display.snapshot-only .rd-scan {
+    display: none !important;
   }
 
   /* section blocks */
@@ -412,7 +412,6 @@
 
   /* ── result display box ── */
   function setResultDisplay(verdict, qrData, errorType) {
-    var col = verdict==='PASS' ? C_PASS : verdict==='REJECT' ? C_REJECT : C_BLUE;
     var rd   = document.getElementById('resultDisplay');
     var rdv  = document.getElementById('rdVerdict');
     var rds  = document.getElementById('rdSub');
@@ -421,54 +420,39 @@
     var resultImg = document.getElementById('resultImage');
     var resultOverlay = document.getElementById('resultOverlay');
 
-    rd.style.borderColor  = col;
-    rdv.style.color       = col;
-    scan.style.background = col;
+    // Keep the top-right box line fixed, so it does not keep switching colour
+    rd.style.borderColor  = C_BLUE;
+    scan.style.background = C_BLUE;
+    rd.querySelectorAll('.rd-corner').forEach(function(c){ c.style.borderColor = C_BLUE; });
 
-    /* corner color via CSS inherit on border-color */
-    rd.querySelectorAll('.rd-corner').forEach(function(c){ c.style.borderColor = col; });
-
-    if (verdict === 'PASS') {
-      rdv.textContent = '✓  PASS';
-      rds.textContent = 'QR code accepted';
-      scan.classList.add('active');
-
-      // Capture and freeze the current main camera frame into the top-right result box
+    if (verdict === 'PASS' || verdict === 'REJECT') {
+      // Capture and freeze current camera frame into result box
       if (lastFrameImage) {
         capturedResultImage = lastFrameImage;
         resultImg.src = capturedResultImage;
         resultImg.style.display = 'block';
-        resultOverlay.style.display = 'block';
       }
 
-      if (qrData) { rdq.style.display = 'block'; rdq.textContent = qrData; }
-      else          rdq.style.display = 'none';
-    } else if (verdict === 'REJECT') {
-      rdv.textContent = '✗  REJECT';
-      rds.textContent = 'Reason: ' + (errorType || '—');
-      scan.classList.remove('active');
-
-      // Capture and freeze the current main camera frame into the top-right result box
-      if (lastFrameImage) {
-        capturedResultImage = lastFrameImage;
-        resultImg.src = capturedResultImage;
-        resultImg.style.display = 'block';
-        resultOverlay.style.display = 'block';
-      }
-
-      rdq.style.display = 'none';
-    } else {
-      rdv.textContent = 'NO QR';
-      rds.textContent = 'No QR code detected';
-      scan.classList.remove('active');
-      rdq.style.display = 'none';
-
-      // Hide snapshot when no QR is detected
-      resultImg.style.display = 'none';
-      resultImg.removeAttribute('src');
+      // Show image clearly only: remove PASS/REJECT text overlay and scan line
+      rd.classList.add('snapshot-only');
       resultOverlay.style.display = 'none';
-      capturedResultImage = null;
+      scan.classList.remove('active');
+      rdq.style.display = 'none';
+      return;
     }
+
+    // NO QR state: hide snapshot and show normal text
+    rd.classList.remove('snapshot-only');
+    resultImg.style.display = 'none';
+    resultImg.removeAttribute('src');
+    resultOverlay.style.display = 'none';
+    capturedResultImage = null;
+
+    rdv.style.color = C_BLUE;
+    rdv.textContent = 'NO QR';
+    rds.textContent = 'No QR code detected';
+    scan.classList.remove('active');
+    rdq.style.display = 'none';
   }
 
   /* ── verdict strip (left) ── */
