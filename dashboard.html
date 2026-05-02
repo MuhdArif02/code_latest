@@ -519,10 +519,10 @@
     if (verdict==='PASS')        stats.pass++;
     else if (verdict==='REJECT') stats.reject++;
     else                         stats.no++;
-    document.getElementById('totalFrames').textContent = stats.total;
-    document.getElementById('passCount').textContent   = stats.pass;
-    document.getElementById('rejectCount').textContent = stats.reject;
-    document.getElementById('noCount').textContent     = stats.no;
+    document.getElementById('totalFrames').textContent = d.total_count || 0;
+    document.getElementById('passCount').textContent   = d.pass_count || 0;
+    document.getElementById('rejectCount').textContent = d.reject_count || 0;
+    document.getElementById('noCount').textContent     = d.no_count || 0;
 
     /* camera */
     if (d.frame) {
