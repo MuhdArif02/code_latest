@@ -439,39 +439,39 @@
   document.getElementById('rdScan').style.background = col;
   }
 
-    // // Keep the top-right box line fixed, so it does not keep switching colour
-    // rd.style.borderColor  = C_BLUE;
-    // scan.style.background = C_BLUE;
-    // rd.querySelectorAll('.rd-corner').forEach(function(c){ c.style.borderColor = C_BLUE; });
+    // Keep the top-right box line fixed, so it does not keep switching colour
+    rd.style.borderColor  = C_BLUE;
+    scan.style.background = C_BLUE;
+    rd.querySelectorAll('.rd-corner').forEach(function(c){ c.style.borderColor = C_BLUE; });
 
-    // if (verdict === 'PASS' || verdict === 'REJECT') {
-    //   // Capture and freeze current camera frame into result box
-    //   if (lastFrameImage) {
-    //     capturedResultImage = lastFrameImage;
-    //     resultImg.src = capturedResultImage;
-    //     resultImg.style.display = 'block';
-    //   }
+    if (verdict === 'PASS' || verdict === 'REJECT') {
+      // Capture and freeze current camera frame into result box
+      if (lastFrameImage) {
+        capturedResultImage = lastFrameImage;
+        resultImg.src = capturedResultImage;
+        resultImg.style.display = 'block';
+      }
 
-    //   // Show image clearly only: remove PASS/REJECT text overlay and scan line
-    //   rd.classList.add('snapshot-only');
-    //   resultOverlay.style.display = 'none';
-    //   scan.classList.remove('active');
-    //   rdq.style.display = 'none';
-    //   return;
-    // }
+      // Show image clearly only: remove PASS/REJECT text overlay and scan line
+      rd.classList.add('snapshot-only');
+      resultOverlay.style.display = 'none';
+      scan.classList.remove('active');
+      rdq.style.display = 'none';
+      return;
+    }
 
-    // // NO QR state: hide snapshot and show normal text
-    // rd.classList.remove('snapshot-only');
-    // resultImg.style.display = 'none';
-    // resultImg.removeAttribute('src');
-    // resultOverlay.style.display = 'none';
-    // capturedResultImage = null;
+    // NO QR state: hide snapshot and show normal text
+    rd.classList.remove('snapshot-only');
+    resultImg.style.display = 'none';
+    resultImg.removeAttribute('src');
+    resultOverlay.style.display = 'none';
+    capturedResultImage = null;
 
-    // rdv.style.color = C_BLUE;
-    // rdv.textContent = 'NO QR';
-    // rds.textContent = 'No QR code detected';
-    // scan.classList.remove('active');
-    // rdq.style.display = 'none';
+    rdv.style.color = C_BLUE;
+    rdv.textContent = 'NO QR';
+    rds.textContent = 'No QR code detected';
+    scan.classList.remove('active');
+    rdq.style.display = 'none';
   
 
   /* ── verdict strip (left) ── */
