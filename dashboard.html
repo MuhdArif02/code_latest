@@ -156,7 +156,7 @@
     padding: 16px;
     transition: border-color .35s;
   }
-  .rd-corner { position: absolute; width: 12px; height: 12px; border-color: inherit; border-style: solid; opacity: .7; }
+  .rd-corner { position: absolute; width: 12px; height: 12px; border-color: inherit; border-style: solid; opacity: .9; z-index: 4; }
   .rd-corner.tl { top: 5px; left: 5px;  border-width: 1.5px 0 0 1.5px; }
   .rd-corner.tr { top: 5px; right: 5px; border-width: 1.5px 1.5px 0 0; }
   .rd-corner.bl { bottom: 5px; left: 5px;  border-width: 0 0 1.5px 1.5px; }
@@ -164,6 +164,7 @@
   .rd-scan {
     position: absolute; left: 0; right: 0; height: 1px; opacity: 0;
     transition: background .35s, opacity .3s;
+    z-index: 3;
   }
   .rd-scan.active { opacity: 1; animation: rdscan 2s ease-in-out infinite; }
   @keyframes rdscan { 0%{top:5%} 50%{top:93%} 100%{top:5%} }
@@ -182,12 +183,14 @@
 
   /* captured result snapshot in top-right box */
   .result-image {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
+    position: absolute;
+    inset: 4px;                 /* keep coloured border visible */
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
     object-fit: cover;
     display: none;
     z-index: 0;
-    opacity: .78;
+    opacity: 1;                 /* clear snapshot image */
   }
   .result-overlay { display: none; }
   .result-content {
@@ -411,48 +414,37 @@
   var C_BLUE   = '#00b4e0';
 
   /* ── result display box ── */
-  // function setResultDisplay(verdict, qrData, errorType) {
-  //   var rd   = document.getElementById('resultDisplay');
-  //   var rdv  = document.getElementById('rdVerdict');
-  //   var rds  = document.getElementById('rdSub');
-  //   var rdq  = document.getElementById('rdQr');
-  //   var scan = document.getElementById('rdScan');
-  //   var resultImg = document.getElementById('resultImage');
-  //   var resultOverlay = document.getElementById('resultOverlay');
-
   function setResultDisplay(verdict, qrData, errorType) {
-  var col = verdict === 'PASS' ? C_PASS :
-            verdict === 'REJECT' ? C_REJECT :
-            C_BLUE;
+    var rd   = document.getElementById('resultDisplay');
+    var rdv  = document.getElementById('rdVerdict');
+    var rds  = document.getElementById('rdSub');
+    var rdq  = document.getElementById('rdQr');
+    var scan = document.getElementById('rdScan');
+    var resultImg = document.getElementById('resultImage');
+    var resultOverlay = document.getElementById('resultOverlay');
 
-  var rd = document.getElementById('resultDisplay');
+    // Border colour follows inspection status
+    var col = verdict === 'PASS' ? C_PASS :
+              verdict === 'REJECT' ? C_REJECT :
+              C_BLUE;
 
-  // 🔥 FORCE BORDER COLOR
-  rd.style.border = "2px solid " + col;
-
-  // 🔥 ALSO UPDATE CORNERS
-  rd.querySelectorAll('.rd-corner').forEach(function(c){
-    c.style.borderColor = col;
-  });
-
-  // 🔥 SCAN LINE
-  document.getElementById('rdScan').style.background = col;
-  }
-
-    // Keep the top-right box line fixed, so it does not keep switching colour
-    rd.style.borderColor  = C_BLUE;
-    scan.style.background = C_BLUE;
-    rd.querySelectorAll('.rd-corner').forEach(function(c){ c.style.borderColor = C_BLUE; });
+    // Force border + corner colour every update
+    rd.style.border = '2px solid ' + col;
+    rd.style.boxShadow = '0 0 10px ' + col + '55';
+    scan.style.background = col;
+    rd.querySelectorAll('.rd-corner').forEach(function(c){
+      c.style.borderColor = col;
+    });
 
     if (verdict === 'PASS' || verdict === 'REJECT') {
-      // Capture and freeze current camera frame into result box
+      // Capture latest camera frame into top-right box
       if (lastFrameImage) {
         capturedResultImage = lastFrameImage;
         resultImg.src = capturedResultImage;
         resultImg.style.display = 'block';
       }
 
-      // Show image clearly only: remove PASS/REJECT text overlay and scan line
+      // Clean snapshot only: no PASS/REJECT text overlay in the image box
       rd.classList.add('snapshot-only');
       resultOverlay.style.display = 'none';
       scan.classList.remove('active');
@@ -460,7 +452,7 @@
       return;
     }
 
-    // NO QR state: hide snapshot and show normal text
+    // NO QR: blue border, hide snapshot, show normal text
     rd.classList.remove('snapshot-only');
     resultImg.style.display = 'none';
     resultImg.removeAttribute('src');
@@ -472,7 +464,7 @@
     rds.textContent = 'No QR code detected';
     scan.classList.remove('active');
     rdq.style.display = 'none';
-  
+  }
 
   /* ── verdict strip (left) ── */
   function setVerdictStrip(verdict, errorType, qrData) {
