@@ -586,6 +586,41 @@ class RTSPStreamer:
 
 
 # =========================================================
+# QR COUNT LOOP (ONE QR = ONE COUNT)
+# =========================================================
+class QRCountLoop:
+    def __init__(self):
+        self.waiting_new_qr = True
+        self.pass_count = 0
+        self.reject_count = 0
+        self.total_count = 0
+
+    def update(self, verdict):
+        counted_now = False
+
+        # Reset when NO QR
+        if verdict == "NO":
+            self.waiting_new_qr = True
+            return counted_now
+
+        # Count only FIRST detection
+        if self.waiting_new_qr:
+            if verdict == "PASS":
+                self.pass_count += 1
+                self.total_count += 1
+                counted_now = True
+
+            elif verdict == "REJECT":
+                self.reject_count += 1
+                self.total_count += 1
+                counted_now = True
+
+            # Lock until QR disappears
+            self.waiting_new_qr = False
+
+        return counted_now
+
+# =========================================================
 # INSPECTION PROCESSOR  (unchanged)
 # =========================================================
 class InspectionProcessor(threading.Thread):
@@ -601,6 +636,7 @@ class InspectionProcessor(threading.Thread):
             pass_thresh=PASS_MAJORITY,
             reject_thresh=REJECT_MAJORITY,
         )
+        self.qr_counter = QRCountLoop()
         self.processed_count = 0
         self.last_proc_time  = 0.0
 
@@ -666,6 +702,8 @@ class InspectionProcessor(threading.Thread):
                     display_error_type = "no_qr"
 
             final_verdict = self.smoother.update(display_verdict)
+            counted_now = self.qr_counter.update(display_verdict)
+
 
             if display_verdict != "NO":
                 draw_result(display_frame, display_verdict, display_pts,
@@ -679,6 +717,12 @@ class InspectionProcessor(threading.Thread):
                 metrics=display_metrics,
                 prep_info=prep_info
             )
+
+            # ✅ ADD HERE (DO NOT REMOVE ABOVE)
+            payload["counted_now"] = counted_now
+            payload["pass_count"] = self.qr_counter.pass_count
+            payload["reject_count"] = self.qr_counter.reject_count
+            payload["total_count"] = self.qr_counter.total_count
 
             _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
             payload["frame"] = base64.b64encode(buffer).decode('utf-8')
