@@ -180,6 +180,33 @@
     word-break: break-all; text-align: center; padding: 0 6px; display: none;
   }
 
+  /* captured result snapshot in top-right box */
+  .result-image {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: none;
+    z-index: 0;
+    opacity: .78;
+  }
+  .result-overlay {
+    position: absolute; inset: 0;
+    z-index: 1;
+    background: rgba(8,12,18,.45);
+    display: none;
+  }
+  .result-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+  }
+
   /* section blocks */
   .sec { padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .sec-title {
@@ -301,12 +328,19 @@
 
       <!-- result display box -->
       <div class="result-display" id="resultDisplay" style="border-color:var(--blue)">
+        <!-- captured PASS/REJECT snapshot will appear here -->
+        <img id="resultImage" class="result-image" alt="Captured inspection result">
+        <div id="resultOverlay" class="result-overlay"></div>
+
         <div class="rd-corner tl"></div><div class="rd-corner tr"></div>
         <div class="rd-corner bl"></div><div class="rd-corner br"></div>
         <div class="rd-scan" id="rdScan" style="background:var(--blue)"></div>
-        <div class="rd-verdict" id="rdVerdict" style="color:var(--blue)">NO QR</div>
-        <div class="rd-sub"    id="rdSub">No QR code detected</div>
-        <div class="rd-qr"     id="rdQr"></div>
+
+        <div class="result-content">
+          <div class="rd-verdict" id="rdVerdict" style="color:var(--blue)">NO QR</div>
+          <div class="rd-sub"    id="rdSub">No QR code detected</div>
+          <div class="rd-qr"     id="rdQr"></div>
+        </div>
       </div>
 
       <!-- inspection result -->
@@ -369,6 +403,8 @@
   var stats = { pass:0, reject:0, no:0, total:0 };
   var lastFrame = null;
   var fpsBuf = [];
+  var lastFrameImage = null;      // latest live camera frame
+  var capturedResultImage = null; // fixed snapshot for latest PASS/REJECT
 
   var C_PASS   = '#00dc50';
   var C_REJECT = '#ff2d2d';
@@ -382,6 +418,8 @@
     var rds  = document.getElementById('rdSub');
     var rdq  = document.getElementById('rdQr');
     var scan = document.getElementById('rdScan');
+    var resultImg = document.getElementById('resultImage');
+    var resultOverlay = document.getElementById('resultOverlay');
 
     rd.style.borderColor  = col;
     rdv.style.color       = col;
@@ -394,18 +432,42 @@
       rdv.textContent = '✓  PASS';
       rds.textContent = 'QR code accepted';
       scan.classList.add('active');
+
+      // Capture and freeze the current main camera frame into the top-right result box
+      if (lastFrameImage) {
+        capturedResultImage = lastFrameImage;
+        resultImg.src = capturedResultImage;
+        resultImg.style.display = 'block';
+        resultOverlay.style.display = 'block';
+      }
+
       if (qrData) { rdq.style.display = 'block'; rdq.textContent = qrData; }
       else          rdq.style.display = 'none';
     } else if (verdict === 'REJECT') {
       rdv.textContent = '✗  REJECT';
       rds.textContent = 'Reason: ' + (errorType || '—');
       scan.classList.remove('active');
+
+      // Capture and freeze the current main camera frame into the top-right result box
+      if (lastFrameImage) {
+        capturedResultImage = lastFrameImage;
+        resultImg.src = capturedResultImage;
+        resultImg.style.display = 'block';
+        resultOverlay.style.display = 'block';
+      }
+
       rdq.style.display = 'none';
     } else {
       rdv.textContent = 'NO QR';
       rds.textContent = 'No QR code detected';
       scan.classList.remove('active');
       rdq.style.display = 'none';
+
+      // Hide snapshot when no QR is detected
+      resultImg.style.display = 'none';
+      resultImg.removeAttribute('src');
+      resultOverlay.style.display = 'none';
+      capturedResultImage = null;
     }
   }
 
@@ -470,9 +532,14 @@
     /* camera */
     if (d.frame) {
       var img = document.getElementById('camFeed');
-      img.src = 'data:image/jpeg;base64,' + d.frame;
+      var frameSrc = 'data:image/jpeg;base64,' + d.frame;
+
+      img.src = frameSrc;
       img.style.display = 'block';
       document.getElementById('camWaiting').classList.add('hidden');
+
+      // keep latest frame ready for PASS/REJECT snapshot
+      lastFrameImage = frameSrc;
     }
 
     /* verdict strip */
@@ -548,6 +615,8 @@
     document.getElementById('camWaiting').classList.remove('hidden');
     stats = {pass:0,reject:0,no:0,total:0};
     fpsBuf=[]; lastFrame=null;
+    lastFrameImage = null;
+    capturedResultImage = null;
     ['totalFrames','passCount','rejectCount','noCount'].forEach(function(id){
       document.getElementById(id).textContent='0';
     });
