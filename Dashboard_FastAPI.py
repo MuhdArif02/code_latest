@@ -588,35 +588,84 @@ class RTSPStreamer:
 # =========================================================
 # QR COUNT LOOP (ONE QR = ONE COUNT)
 # =========================================================
+# class QRCountLoop:
+#     def __init__(self):
+#         self.waiting_new_qr = True
+#         self.pass_count = 0
+#         self.reject_count = 0
+#         self.total_count = 0
+
+#     def update(self, verdict):
+#         counted_now = False
+
+#         # Reset when NO QR
+#         if verdict == "NO":
+#             self.waiting_new_qr = True
+#             return counted_now
+
+#         # Count only FIRST detection
+#         if self.waiting_new_qr:
+#             if verdict == "PASS":
+#                 self.pass_count += 1
+#                 self.total_count += 1
+#                 counted_now = True
+
+#             elif verdict == "REJECT":
+#                 self.reject_count += 1
+#                 self.total_count += 1
+#                 counted_now = True
+
+#             # Lock until QR disappears
+#             self.waiting_new_qr = False
+
+#         return counted_now
+
 class QRCountLoop:
     def __init__(self):
         self.waiting_new_qr = True
+
         self.pass_count = 0
         self.reject_count = 0
         self.total_count = 0
 
+        # 🔥 key fix
+        self.no_qr_counter = 0
+        self.NO_QR_THRESHOLD = 10   # adjust (8~15 recommended)
+
     def update(self, verdict):
         counted_now = False
 
-        # Reset when NO QR
+        # ===============================
+        # NO QR (may be noise)
+        # ===============================
         if verdict == "NO":
-            self.waiting_new_qr = True
+            self.no_qr_counter += 1
+
+            # only reset if QR gone for long enough
+            if self.no_qr_counter >= self.NO_QR_THRESHOLD:
+                self.waiting_new_qr = True
+
             return counted_now
 
-        # Count only FIRST detection
-        if self.waiting_new_qr:
-            if verdict == "PASS":
-                self.pass_count += 1
-                self.total_count += 1
-                counted_now = True
+        # ===============================
+        # QR DETECTED
+        # ===============================
+        else:
+            self.no_qr_counter = 0  # reset noise counter
 
-            elif verdict == "REJECT":
-                self.reject_count += 1
-                self.total_count += 1
-                counted_now = True
+            if self.waiting_new_qr:
+                if verdict == "PASS":
+                    self.pass_count += 1
+                    self.total_count += 1
+                    counted_now = True
 
-            # Lock until QR disappears
-            self.waiting_new_qr = False
+                elif verdict == "REJECT":
+                    self.reject_count += 1
+                    self.total_count += 1
+                    counted_now = True
+
+                # lock until QR disappears stably
+                self.waiting_new_qr = False
 
         return counted_now
 
