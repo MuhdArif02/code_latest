@@ -853,7 +853,8 @@ class InspectionProcessor(threading.Thread):
             )
 
             # ✅ ADD HERE (DO NOT REMOVE ABOVE)
-            payload["counted_now"] = counted_now
+            # payload["counted_now"] = counted_now
+            payload["is_new_count"] = counted_now
             payload["pass_count"] = self.qr_counter.pass_count
             payload["reject_count"] = self.qr_counter.reject_count
             payload["total_count"] = self.qr_counter.total_count
