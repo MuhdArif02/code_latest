@@ -36,10 +36,10 @@ CROP_H = 540
 BLUR_THRESHOLD = 55.0
 ANGLE_PASS_MAX = 35.0
 MIN_DYNAMIC_RANGE = 35
-MIN_BIMODAL_RATIO = 0.45
+# MIN_BIMODAL_RATIO = 0.45
 MIN_SOLIDITY = 0.75
 MIN_SIDE = 45
-MAX_MEAN_SAT = 70.0
+# MAX_MEAN_SAT = 70.0
 
 SMOOTH_WINDOW = 5
 PASS_MAJORITY = 3
@@ -325,32 +325,66 @@ def detect_qr_shape(gray):
 # =========================================================
 # METRICS / INSPECTION  (unchanged)
 # =========================================================
+# def compute_quality_metrics(frame, pts):
+#     x, y, w, h = cv2.boundingRect(pts.astype(np.int32))
+#     enhanced, used_retinex, _, _ = auto_retinex_if_needed(frame)
+#     gray = cv2.cvtColor(enhanced, cv2.COLOR_BGR2GRAY)
+#     gray_roi = get_safe_roi(gray, x, y, w, h)
+#     bgr_roi  = get_safe_roi(enhanced, x, y, w, h)
+
+#     if gray_roi.size == 0 or bgr_roi.size == 0:
+#         return {"blur": 0.0, "dynamic": 0, "bimodal": 0.0, "solidity": 0.0,
+#                 "angle": 0.0, "norm_angle": 0.0, "sat": 0.0, "w": w, "h": h, "retinex": used_retinex}
+
+#     blur    = measure_blur(gray_roi)
+#     dynamic = int(gray_roi.max()) - int(gray_roi.min())
+#     total   = gray_roi.size
+#     extreme = int(np.sum(gray_roi < 64)) + int(np.sum(gray_roi > 192))
+#     bimodal = extreme / max(total, 1)
+#     hsv     = cv2.cvtColor(bgr_roi, cv2.COLOR_BGR2HSV)
+#     mean_sat= float(hsv[:, :, 1].mean())
+#     solidity= polygon_solidity(pts)
+#     angle   = get_angle_from_pts(pts)
+#     norm_angle = normalize_qr_angle(angle)
+
+#     return {"blur": blur, "dynamic": dynamic, "bimodal": bimodal, "solidity": solidity,
+#             "angle": angle, "norm_angle": norm_angle, "sat": mean_sat,
+#             "w": w, "h": h, "retinex": used_retinex}
+
 def compute_quality_metrics(frame, pts):
     x, y, w, h = cv2.boundingRect(pts.astype(np.int32))
     enhanced, used_retinex, _, _ = auto_retinex_if_needed(frame)
     gray = cv2.cvtColor(enhanced, cv2.COLOR_BGR2GRAY)
     gray_roi = get_safe_roi(gray, x, y, w, h)
-    bgr_roi  = get_safe_roi(enhanced, x, y, w, h)
 
-    if gray_roi.size == 0 or bgr_roi.size == 0:
-        return {"blur": 0.0, "dynamic": 0, "bimodal": 0.0, "solidity": 0.0,
-                "angle": 0.0, "norm_angle": 0.0, "sat": 0.0, "w": w, "h": h, "retinex": used_retinex}
+    if gray_roi.size == 0:
+        return {
+            "blur": 0.0,
+            "dynamic": 0,
+            "solidity": 0.0,
+            "angle": 0.0,
+            "norm_angle": 0.0,
+            "w": w,
+            "h": h,
+            "retinex": used_retinex
+        }
 
-    blur    = measure_blur(gray_roi)
+    blur = measure_blur(gray_roi)
     dynamic = int(gray_roi.max()) - int(gray_roi.min())
-    total   = gray_roi.size
-    extreme = int(np.sum(gray_roi < 64)) + int(np.sum(gray_roi > 192))
-    bimodal = extreme / max(total, 1)
-    hsv     = cv2.cvtColor(bgr_roi, cv2.COLOR_BGR2HSV)
-    mean_sat= float(hsv[:, :, 1].mean())
-    solidity= polygon_solidity(pts)
-    angle   = get_angle_from_pts(pts)
+    solidity = polygon_solidity(pts)
+    angle = get_angle_from_pts(pts)
     norm_angle = normalize_qr_angle(angle)
 
-    return {"blur": blur, "dynamic": dynamic, "bimodal": bimodal, "solidity": solidity,
-            "angle": angle, "norm_angle": norm_angle, "sat": mean_sat,
-            "w": w, "h": h, "retinex": used_retinex}
-
+    return {
+        "blur": blur,
+        "dynamic": dynamic,
+        "solidity": solidity,
+        "angle": angle,
+        "norm_angle": norm_angle,
+        "w": w,
+        "h": h,
+        "retinex": used_retinex
+    }
 
 def inspect_decoded_qr(frame, code):
     if len(code.polygon) != 4:
@@ -372,16 +406,16 @@ def inspect_decoded_qr(frame, code):
     if not metrics["retinex"]:
         if metrics["dynamic"] < MIN_DYNAMIC_RANGE:
             return "REJECT", pts, "low_contrast", metrics, data
-        if metrics["bimodal"] < MIN_BIMODAL_RATIO:
-            return "REJECT", pts, "contaminated", metrics, data
+        # if metrics["bimodal"] < MIN_BIMODAL_RATIO:
+        #     return "REJECT", pts, "contaminated", metrics, data
     else:
         if metrics["dynamic"] < 25:
             return "REJECT", pts, "very_low_contrast", metrics, data
-        if metrics["bimodal"] < 0.35:
-            return "REJECT", pts, "heavy_contamination", metrics, data
+        # if metrics["bimodal"] < 0.35:
+        #     return "REJECT", pts, "heavy_contamination", metrics, data
 
-    if metrics["sat"] > MAX_MEAN_SAT:
-        return "REJECT", pts, "colored_contamination", metrics, data
+    # if metrics["sat"] > MAX_MEAN_SAT:
+    #     return "REJECT", pts, "colored_contamination", metrics, data
     if metrics["solidity"] < MIN_SOLIDITY:
         return "REJECT", pts, "distorted", metrics, data
 
@@ -620,6 +654,58 @@ class RTSPStreamer:
 
 #         return counted_now
 
+# class QRCountLoop:
+#     def __init__(self):
+#         self.waiting_new_qr = True
+
+#         self.pass_count = 0
+#         self.reject_count = 0
+#         self.total_count = 0
+
+#         # 🔥 key fix
+#         self.no_qr_counter = 0
+#         self.NO_QR_THRESHOLD = 10   # adjust (8~15 recommended)
+
+#     def update(self, verdict):
+#         counted_now = False
+
+#         # ===============================
+#         # NO QR (may be noise)
+#         # ===============================
+#         if verdict == "NO":
+#             self.no_qr_counter += 1
+
+#             # only reset if QR gone for long enough
+#             if self.no_qr_counter >= self.NO_QR_THRESHOLD:
+#                 self.waiting_new_qr = True
+
+#             return counted_now
+
+#         # ===============================
+#         # QR DETECTED
+#         # ===============================
+#         else:
+#             self.no_qr_counter = 0  # reset noise counter
+
+#             if self.waiting_new_qr:
+#                 if verdict == "PASS":
+#                     self.pass_count += 1
+#                     self.total_count += 1
+#                     counted_now = True
+
+#                 elif verdict == "REJECT":
+#                     self.reject_count += 1
+#                     self.total_count += 1
+#                     counted_now = True
+
+#                 # lock until QR disappears stably
+#                 self.waiting_new_qr = False
+
+#         return counted_now
+
+# =========================================================
+# QR COUNT LOOP (STABLE ONE QR = ONE COUNT)
+# =========================================================
 class QRCountLoop:
     def __init__(self):
         self.waiting_new_qr = True
@@ -628,43 +714,36 @@ class QRCountLoop:
         self.reject_count = 0
         self.total_count = 0
 
-        # 🔥 key fix
         self.no_qr_counter = 0
-        self.NO_QR_THRESHOLD = 10   # adjust (8~15 recommended)
+        self.NO_QR_THRESHOLD = 5
 
     def update(self, verdict):
         counted_now = False
 
-        # ===============================
-        # NO QR (may be noise)
-        # ===============================
+        # NO QR must appear several frames before reset
         if verdict == "NO":
             self.no_qr_counter += 1
 
-            # only reset if QR gone for long enough
             if self.no_qr_counter >= self.NO_QR_THRESHOLD:
                 self.waiting_new_qr = True
 
             return counted_now
 
-        # ===============================
-        # QR DETECTED
-        # ===============================
-        else:
-            self.no_qr_counter = 0  # reset noise counter
+        # QR detected
+        if verdict in ["PASS", "REJECT"]:
+            self.no_qr_counter = 0
 
             if self.waiting_new_qr:
                 if verdict == "PASS":
                     self.pass_count += 1
-                    self.total_count += 1
-                    counted_now = True
 
                 elif verdict == "REJECT":
                     self.reject_count += 1
-                    self.total_count += 1
-                    counted_now = True
 
-                # lock until QR disappears stably
+                self.total_count += 1
+                counted_now = True
+
+                # lock until QR becomes NO for stable frames
                 self.waiting_new_qr = False
 
         return counted_now
@@ -740,18 +819,24 @@ class InspectionProcessor(threading.Thread):
                         best = (verdict, pts, error_type, metrics, data)
                 display_verdict, display_pts, display_error_type, display_metrics, qr_data = best
             else:
-                ok, pts = detect_qr_shape(gray)
-                if ok:
-                    display_verdict    = "REJECT"
-                    display_pts        = pts
-                    display_error_type = "unreadable_qr"
-                    display_metrics    = compute_quality_metrics(enhanced_frame, pts)
-                else:
-                    display_verdict    = "NO"
-                    display_error_type = "no_qr"
+                # ok, pts = detect_qr_shape(gray)
+                # # if ok:
+                # if ok and pts is not None and cv2.contourArea(pts.astype(np.int32)) > 10000:    
+                #     display_verdict    = "REJECT"
+                #     display_pts        = pts
+                #     display_error_type = "unreadable_qr"
+                #     display_metrics    = compute_quality_metrics(enhanced_frame, pts)
+                # else:
+                #     display_verdict    = "NO"
+                #     display_error_type = "no_qr"
+                
+                display_verdict    = "NO"
+                display_pts        = None
+                display_error_type = "no_qr"
+                display_metrics    = {}
 
             final_verdict = self.smoother.update(display_verdict)
-            counted_now = self.qr_counter.update(display_verdict)
+            counted_now = self.qr_counter.update(final_verdict)
 
 
             if display_verdict != "NO":
