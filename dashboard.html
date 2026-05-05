@@ -436,21 +436,47 @@
       c.style.borderColor = col;
     });
 
+    // if (verdict === 'PASS' || verdict === 'REJECT') {
+
+    // if ((verdict === 'PASS' || verdict === 'REJECT') && window.isNewCount) {
+    //   // Capture latest camera frame into top-right box
+    //   if (lastFrameImage) {
+    //     capturedResultImage = lastFrameImage;
+    //     resultImg.src = capturedResultImage;
+    //     resultImg.style.display = 'block';
+    //   }
+
+    //   // Clean snapshot only: no PASS/REJECT text overlay in the image box
+    //   rd.classList.add('snapshot-only');
+    //   resultOverlay.style.display = 'none';
+    //   scan.classList.remove('active');
+    //   rdq.style.display = 'none';
+    //   return;
+    // }
+
     if (verdict === 'PASS' || verdict === 'REJECT') {
-      // Capture latest camera frame into top-right box
-      if (lastFrameImage) {
+
+      // Capture only when NEW detection
+      if (window.isNewCount && lastFrameImage) {
         capturedResultImage = lastFrameImage;
         resultImg.src = capturedResultImage;
         resultImg.style.display = 'block';
       }
 
-      // Clean snapshot only: no PASS/REJECT text overlay in the image box
+      // Hold previous captured image
+      if (capturedResultImage) {
+        resultImg.src = capturedResultImage;
+        resultImg.style.display = 'block';
+      }
+
+      // UI style
       rd.classList.add('snapshot-only');
       resultOverlay.style.display = 'none';
       scan.classList.remove('active');
       rdq.style.display = 'none';
-      return;
-    }
+
+      return; // 🔥 IMPORTANT: stop here
+      }
 
     // NO QR: blue border, hide snapshot, show normal text
     rd.classList.remove('snapshot-only');
@@ -496,6 +522,7 @@
   /* ── main update ── */
   function updateDashboard(d) {
     var verdict = d.status || 'NO';
+    window.isNewCount = d.is_new_count || false;
     var metrics = d.metrics || {};
     var now     = performance.now();
 
