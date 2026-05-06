@@ -492,6 +492,7 @@
     // rdq.style.display = 'none';
 
     // NO QR: keep previous captured image
+    // NO QR → maintain previous image
     if (capturedResultImage) {
 
     resultImg.src = capturedResultImage;
@@ -499,8 +500,10 @@
 
     rd.classList.add('snapshot-only');
 
-    } else {
+    return;
+    }
 
+    // If no previous image yet
     rd.classList.remove('snapshot-only');
 
     rdv.style.color = C_BLUE;
@@ -508,7 +511,6 @@
     rds.textContent = 'No QR code detected';
 
     resultImg.style.display = 'none';
-    }
 
     resultOverlay.style.display = 'none';
     scan.classList.remove('active');
