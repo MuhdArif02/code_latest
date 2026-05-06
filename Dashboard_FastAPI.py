@@ -20,7 +20,7 @@ import subprocess
 # =========================================================
 # CONFIG
 # =========================================================
-USB_CAMERA_INDEX = 1
+USB_CAMERA_INDEX = 0
 USB_WIDTH = 1280
 USB_HEIGHT = 720
 USB_FPS = 30
