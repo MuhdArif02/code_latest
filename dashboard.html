@@ -478,16 +478,39 @@
       return; // 🔥 IMPORTANT: stop here
       }
 
-    // NO QR: blue border, hide snapshot, show normal text
+    // // NO QR: blue border, hide snapshot, show normal text
+    // rd.classList.remove('snapshot-only');
+    // // resultImg.style.display = 'none';
+    // // resultImg.removeAttribute('src');
+    // resultOverlay.style.display = 'none';
+    // // capturedResultImage = null;
+
+    // rdv.style.color = C_BLUE;
+    // rdv.textContent = 'NO QR';
+    // rds.textContent = 'No QR code detected';
+    // scan.classList.remove('active');
+    // rdq.style.display = 'none';
+
+    // NO QR: keep previous captured image
+    if (capturedResultImage) {
+
+    resultImg.src = capturedResultImage;
+    resultImg.style.display = 'block';
+
+    rd.classList.add('snapshot-only');
+
+    } else {
+
     rd.classList.remove('snapshot-only');
-    resultImg.style.display = 'none';
-    resultImg.removeAttribute('src');
-    resultOverlay.style.display = 'none';
-    capturedResultImage = null;
 
     rdv.style.color = C_BLUE;
     rdv.textContent = 'NO QR';
     rds.textContent = 'No QR code detected';
+
+    resultImg.style.display = 'none';
+    }
+
+    resultOverlay.style.display = 'none';
     scan.classList.remove('active');
     rdq.style.display = 'none';
   }
