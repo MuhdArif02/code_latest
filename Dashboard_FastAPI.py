@@ -859,6 +859,8 @@ class InspectionProcessor(threading.Thread):
             payload["reject_count"] = self.qr_counter.reject_count
             payload["total_count"] = self.qr_counter.total_count
 
+            payload["no_count"] = self.qr_counter.no_qr_counter
+
             _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
             payload["frame"] = base64.b64encode(buffer).decode('utf-8')
 
