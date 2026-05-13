@@ -139,7 +139,7 @@
 
   /* ═══════════════ RIGHT — SIDEBAR ═══════════════ */
   .right {
-    width: 220px; flex-shrink: 0;
+    width: 280px; flex-shrink: 0;
     display: flex; flex-direction: column;
     background: var(--panel2);
     overflow-y: auto;
@@ -653,7 +653,7 @@
       contrast:   d.contrast
     };
         // THEN call with frozen r ↓
-    setVerdictStrip(r.verdict, r.error_type, r.qr_data);  // ← frozen r
+    setVerdictStrip(verdict, d.error_type, d.qr_data);  // ← frozen r
     setResultDisplay(verdict, d.qr_data, d.error_type);   // ← still live
 
     // /* verdict strip */
