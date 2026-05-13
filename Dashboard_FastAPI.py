@@ -821,8 +821,13 @@ class InspectionProcessor(threading.Thread):
             t0 = time.perf_counter()
 
             crop_frame, _, _ = center_crop(frame, CROP_W, CROP_H)
-            enhanced_frame, gray, otsu, adap, prep_info = preprocess_variants(crop_frame)
-            display_frame = enhanced_frame.copy()
+            h_crop, w_crop = crop_frame.shape[:2]
+            right_frame = crop_frame[:, w_crop*2//3:] #Right 1/3 only detect
+            # enhanced_frame, gray, otsu, adap, prep_info = preprocess_variants(crop_frame)
+            enhanced_frame, gray, otsu, adap, prep_info = preprocess_variants(right_frame)
+            # display_frame = enhanced_frame.copy()
+            display_frame = crop_frame.copy()
+            cv2.line(display_frame, (w_crop*2//3, 0), (w_crop*2//3, h_crop), (0, 255, 255), 2)
 
             display_verdict    = "NO"
             display_pts        = None
@@ -872,10 +877,15 @@ class InspectionProcessor(threading.Thread):
             eff_metrics    = display_metrics    if display_verdict != "NO" else self.last_metrics
             eff_qr_data    = qr_data            if display_verdict != "NO" else self.last_qr_data
 
-            if display_verdict != "NO":
-                draw_result(display_frame, display_verdict, display_pts,
-                            display_error_type, display_metrics)
-                
+            # if display_verdict != "NO":
+            #     draw_result(display_frame, display_verdict, display_pts,
+            #                 display_error_type, display_metrics)
+            if display_verdict != "NO" and display_pts is not None:
+                # Offset pts by half width to correct position on full frame
+                offset_pts = display_pts.copy()
+                offset_pts[:, 0] += w_crop *2// 3   # ← shift x coords to right half
+                draw_result(display_frame, display_verdict, offset_pts,
+                            display_error_type, display_metrics)               
 
             # payload = make_payload(
             #     verdict=final_verdict,
