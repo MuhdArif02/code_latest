@@ -56,9 +56,8 @@
     gap: 2px; width: 26px; height: 26px;
   }
   .lg-cell { border-radius: 1px; }
-  .lg-cell.filled { background: var(--blue); animation: lp 2s ease-in-out infinite; }
-  .lg-cell.hollow { border: 1px solid var(--blue); background: transparent; animation: lp 2s ease-in-out infinite .4s; }
-  @keyframes lp { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .lg-cell.filled { background: var(--blue); }
+  .lg-cell.hollow { border: 1px solid var(--blue); background: transparent; }
 
   .logo-text h1 {
     font-family: var(--mono); font-size: 13px; letter-spacing: 3px;
@@ -267,6 +266,50 @@
 
   /* full layout wrapper */
   .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* ═══════════════ LOGO PANEL (NEW) ═══════════════ */
+  .logo-panel {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 10px 10px 8px;
+    border-top: 1px solid var(--border);
+    background: var(--panel2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .logo-panel-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo-panel-row.two {
+    gap: 6px;
+  }
+  .logo-box {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 4px;
+  }
+  .logo-box.unikl {
+    width: 100%;
+    height: 44px;
+  }
+  .logo-box.small {
+    width: 96px;
+    height: 40px;
+  }
+  .logo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: brightness(1.1) contrast(1.05);
+  }
 </style>
 </head>
 <body>
@@ -379,6 +422,26 @@
         <div class="row"><span class="rl">NO QR</span>       <span class="rv blue"      id="noCount">0</span></div>
       </div>
 
+      <!-- ── LOGO PANEL (NEW) ── -->
+      <div class="logo-panel">
+        <!-- UniKL — full width row -->
+        <div class="logo-panel-row">
+          <div class="logo-box unikl">
+            <img src="D:\UNIKL\FYP2\code_latest\logo\unikl.jpeg" alt="UniKL">
+          </div>
+        </div>
+        <!-- MOVERobotic + SOLO — side by side -->
+        <div class="logo-panel-row two">
+          <div class="logo-box small">
+            <img src="D:\UNIKL\FYP2\code_latest\logo\move_robotic_sdn_bhd_logo.jpeg" alt="MOVERobotic">
+          </div>
+          <div class="logo-box small">
+            <img src="D:\UNIKL\FYP2\code_latest\logo\solo_labeller_technology_sdn_bhd_logo.jpeg" alt="SOLO Labeller">
+          </div>
+        </div>
+      </div>
+      <!-- ── END LOGO PANEL ── -->
+
     </div>
   </div><!-- /body -->
 
@@ -436,24 +499,6 @@
       c.style.borderColor = col;
     });
 
-    // if (verdict === 'PASS' || verdict === 'REJECT') {
-
-    // if ((verdict === 'PASS' || verdict === 'REJECT') && window.isNewCount) {
-    //   // Capture latest camera frame into top-right box
-    //   if (lastFrameImage) {
-    //     capturedResultImage = lastFrameImage;
-    //     resultImg.src = capturedResultImage;
-    //     resultImg.style.display = 'block';
-    //   }
-
-    //   // Clean snapshot only: no PASS/REJECT text overlay in the image box
-    //   rd.classList.add('snapshot-only');
-    //   resultOverlay.style.display = 'none';
-    //   scan.classList.remove('active');
-    //   rdq.style.display = 'none';
-    //   return;
-    // }
-
     if (verdict === 'PASS' || verdict === 'REJECT') {
 
       // Capture only when NEW detection
@@ -478,20 +523,6 @@
       return; // 🔥 IMPORTANT: stop here
       }
 
-    // // NO QR: blue border, hide snapshot, show normal text
-    // rd.classList.remove('snapshot-only');
-    // // resultImg.style.display = 'none';
-    // // resultImg.removeAttribute('src');
-    // resultOverlay.style.display = 'none';
-    // // capturedResultImage = null;
-
-    // rdv.style.color = C_BLUE;
-    // rdv.textContent = 'NO QR';
-    // rds.textContent = 'No QR code detected';
-    // scan.classList.remove('active');
-    // rdq.style.display = 'none';
-
-    // NO QR: keep previous captured image
     // NO QR → maintain previous image
     if (capturedResultImage) {
 
