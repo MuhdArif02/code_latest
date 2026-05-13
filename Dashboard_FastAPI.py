@@ -455,44 +455,44 @@ def make_payload(verdict, error_type, qr_data, pts, metrics, prep_info):
         h = int(np.max(pts_int[:, 1]) - np.min(pts_int[:, 1]))
         bbox = [x, y, w, h]
 
-    # confidence = 0.0
-    # if metrics:
-    #     blur_score    = float(metrics.get("blur", 0.0))
-    #     dynamic_score = float(metrics.get("dynamic", 0.0))
-    #     confidence    = min(1.0, max(0.0, (blur_score / 120.0) * 0.5 + (dynamic_score / 100.0) * 0.5))
-
-    # return {
-    #     "timestamp":    time.time(),
-    #     "status":       verdict,
-    #     "error_type":   error_type,
-    #     "qr_data":      qr_data,
-    #     "confidence":   round(confidence, 3),
-    #     "bbox":         bbox,
-    #     "metrics":      metrics,
-    #     "retinex_used": prep_info.get("used_retinex", False),
-    #     "brightness":   round(prep_info.get("brightness", 0.0), 2),
-    #     "contrast":     round(prep_info.get("contrast", 0.0), 2),
-    # }
-
-    # AFTER ✅
-    confidence = None
-    if verdict != "NO" and metrics:
+    confidence = 0.0
+    if metrics:
         blur_score    = float(metrics.get("blur", 0.0))
         dynamic_score = float(metrics.get("dynamic", 0.0))
-        confidence    = round(min(1.0, max(0.0, (blur_score / 120.0) * 0.5 + (dynamic_score / 100.0) * 0.5)), 3)
+        confidence    = min(1.0, max(0.0, (blur_score / 120.0) * 0.5 + (dynamic_score / 100.0) * 0.5))
 
     return {
         "timestamp":    time.time(),
         "status":       verdict,
-        "error_type":   None if verdict == "NO" else error_type,
+        "error_type":   error_type,
         "qr_data":      qr_data,
-        "confidence":   confidence,
+        "confidence":   round(confidence, 3),
         "bbox":         bbox,
         "metrics":      metrics,
         "retinex_used": prep_info.get("used_retinex", False),
         "brightness":   round(prep_info.get("brightness", 0.0), 2),
         "contrast":     round(prep_info.get("contrast", 0.0), 2),
     }
+
+    # AFTER ✅
+    # confidence = None
+    # if verdict != "NO" and metrics:
+    #     blur_score    = float(metrics.get("blur", 0.0))
+    #     dynamic_score = float(metrics.get("dynamic", 0.0))
+    #     confidence    = round(min(1.0, max(0.0, (blur_score / 120.0) * 0.5 + (dynamic_score / 100.0) * 0.5)), 3)
+
+    # return {
+    #     "timestamp":    time.time(),
+    #     "status":       verdict,
+    #     "error_type":   None if verdict == "NO" else error_type,
+    #     "qr_data":      qr_data,
+    #     "confidence":   confidence,
+    #     "bbox":         bbox,
+    #     "metrics":      metrics,
+    #     "retinex_used": prep_info.get("used_retinex", False),
+    #     "brightness":   round(prep_info.get("brightness", 0.0), 2),
+    #     "contrast":     round(prep_info.get("contrast", 0.0), 2),
+    # }
 
 
 # =========================================================
@@ -787,6 +787,10 @@ class InspectionProcessor(threading.Thread):
         self.qr_counter = QRCountLoop()
         self.processed_count = 0
         self.last_proc_time  = 0.0
+        self.last_error_type  = None   # ← ADD
+        self.last_metrics     = {}     # ← ADD
+        self.last_qr_data     = ""     # ← ADD
+
 
     def submit_frame(self, frame, frame_id):
         with self.input_lock:
@@ -857,11 +861,21 @@ class InspectionProcessor(threading.Thread):
 
             final_verdict = self.smoother.update(display_verdict)
             counted_now = self.qr_counter.update(final_verdict)
+            # Save last known good values when QR detected
+            if display_verdict != "NO":
+                self.last_error_type = display_error_type
+                self.last_metrics    = display_metrics
+                self.last_qr_data    = qr_data
 
+            # Use saved values when current frame is NO
+            eff_error_type = display_error_type if display_verdict != "NO" else self.last_error_type
+            eff_metrics    = display_metrics    if display_verdict != "NO" else self.last_metrics
+            eff_qr_data    = qr_data            if display_verdict != "NO" else self.last_qr_data
 
             if display_verdict != "NO":
                 draw_result(display_frame, display_verdict, display_pts,
                             display_error_type, display_metrics)
+                
 
             # payload = make_payload(
             #     verdict=final_verdict,
@@ -871,12 +885,19 @@ class InspectionProcessor(threading.Thread):
             #     metrics=display_metrics,
             #     prep_info=prep_info
 
+            # payload = make_payload(
+            #     verdict=final_verdict,
+            #     error_type=display_error_type if display_verdict != "NO" else None,
+            #     qr_data=qr_data,
+            #     pts=display_pts,
+            #     metrics=display_metrics if display_verdict != "NO" else {},
+            #     prep_info=prep_info
             payload = make_payload(
                 verdict=final_verdict,
-                error_type=display_error_type if display_verdict != "NO" else None,
-                qr_data=qr_data,
+                error_type=eff_error_type,
+                qr_data=eff_qr_data,
                 pts=display_pts,
-                metrics=display_metrics if display_verdict != "NO" else {},
+                metrics=eff_metrics,
                 prep_info=prep_info
             )
 
