@@ -805,6 +805,7 @@ class InspectionProcessor(threading.Thread):
 
     def run(self):
         self.running = True
+        last_sent_verdict = None
 
         while self.running:
             item = None
@@ -928,12 +929,9 @@ class InspectionProcessor(threading.Thread):
             # payload["frame"] = base64.b64encode(buffer).decode('utf-8')
             
             # Only attach frame if verdict changed or every 3rd result
-            if final_verdict != last_sent_verdict or self.processed_count % 3 == 0:
-                _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
-                payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+            if final_verdict != last_sent_verdict:
                 last_sent_verdict = final_verdict
-            else:
-                payload["frame"] = None
+                payload["status"] = final_verdict
 
             send_payload_to_clients(payload)
 
