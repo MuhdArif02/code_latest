@@ -41,8 +41,8 @@ MIN_SOLIDITY = 0.75
 MIN_SIDE = 45
 # MAX_MEAN_SAT = 70.0
 
-SMOOTH_WINDOW = 5
-PASS_MAJORITY = 3
+SMOOTH_WINDOW = 3
+PASS_MAJORITY = 2
 REJECT_MAJORITY = 2
 
 WS_HOST = "0.0.0.0"
@@ -735,7 +735,7 @@ class QRCountLoop:
         self.total_count = 0
 
         self.no_qr_counter = 0
-        self.NO_QR_THRESHOLD = 5
+        self.NO_QR_THRESHOLD = 3
 
     def update(self, verdict):
         counted_now = False
