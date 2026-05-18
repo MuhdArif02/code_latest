@@ -925,8 +925,8 @@ class InspectionProcessor(threading.Thread):
 
             payload["no_count"] = self.qr_counter.no_qr_counter
 
-            # _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
-            # payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+            _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+            payload["frame"] = base64.b64encode(buffer).decode('utf-8')
             
             # Only attach frame if verdict changed or every 3rd result
             if final_verdict != last_sent_verdict:
