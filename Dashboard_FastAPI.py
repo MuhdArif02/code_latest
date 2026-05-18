@@ -165,7 +165,7 @@ def _feed_loop():
             last_frame_id = frame_id
             _processor.submit_frame(frame, frame_id)
 
-        time.sleep(0.015)  # ~66 fps poll
+        time.sleep(0.001)  # ~66 fps poll
 
 
 @app.websocket("/ws")
@@ -814,7 +814,7 @@ class InspectionProcessor(threading.Thread):
                     self.latest_input = None
 
             if item is None:
-                time.sleep(0.005)
+                time.sleep(0.001)
                 continue
 
             frame, frame_id = item
@@ -924,8 +924,16 @@ class InspectionProcessor(threading.Thread):
 
             payload["no_count"] = self.qr_counter.no_qr_counter
 
-            _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
-            payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+            # _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+            # payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+            
+            # Only attach frame if verdict changed or every 3rd result
+            if final_verdict != last_sent_verdict or self.processed_count % 3 == 0:
+                _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+                payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+                last_sent_verdict = final_verdict
+            else:
+                payload["frame"] = None
 
             send_payload_to_clients(payload)
 
