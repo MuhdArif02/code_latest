@@ -541,6 +541,8 @@ class USBCameraReader(threading.Thread):
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         self.cap.set(cv2.CAP_PROP_FPS,          self.fps)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE,   1)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)   # step 1: switch to manual
+        self.cap.set(cv2.CAP_PROP_EXPOSURE,     -6)   # step 2: set the speed (adjust as needed, -6 is around 1/60s on many cameras)        
 
         if not self.cap.isOpened():
             self.connected = False
