@@ -831,7 +831,13 @@ class InspectionProcessor(threading.Thread):
             # enhanced_frame, gray, otsu, adap, prep_info = preprocess_variants(crop_frame)
             enhanced_frame, gray, otsu, adap, prep_info = preprocess_variants(right_frame)
             # display_frame = enhanced_frame.copy()
-            display_frame = crop_frame.copy()
+            # display_frame = crop_frame.copy() 
+            # display_frame, _, _, _, _ = preprocess_variants(crop_frame)
+            if prep_info["brightness"] < 110 or prep_info["contrast"] < 50:
+                display_frame = simple_retinex(crop_frame, sigma=12)
+            else:
+                display_frame = crop_frame.copy()
+
             # cv2.line(display_frame, (w_crop*2//3, 0), (w_crop*2//3, h_crop), (0, 255, 255), 2)
             cv2.line(display_frame, (w_crop*1//2, 0), (w_crop*1//2, h_crop), (0, 255, 255), 2)
 
