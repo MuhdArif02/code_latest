@@ -232,8 +232,8 @@ def auto_retinex_if_needed(frame):
     brightness = float(np.mean(gray))
     contrast = float(np.std(gray))
 
-    if brightness < 110 or contrast < 50:
-        enhanced = simple_retinex(frame, sigma=25)
+    if brightness < 40 or contrast < 30:
+        enhanced = simple_retinex(frame, sigma=15)
         used = True
     else:
         enhanced = frame.copy()
@@ -833,7 +833,7 @@ class InspectionProcessor(threading.Thread):
             # display_frame = enhanced_frame.copy()
             # display_frame = crop_frame.copy() 
             # display_frame, _, _, _, _ = preprocess_variants(crop_frame)
-            if prep_info["brightness"] < 110 or prep_info["contrast"] < 50:
+            if prep_info["brightness"] < 40 or prep_info["contrast"] < 30:
                 display_frame = simple_retinex(crop_frame, sigma=12)
             else:
                 display_frame = crop_frame.copy()
@@ -955,7 +955,10 @@ class InspectionProcessor(threading.Thread):
             send_payload_to_clients(frame_payload)
 
             if counted_now:
-                send_payload_to_clients(payload)  # this one still has frame inside
+                # _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+                # payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+                send_payload_to_clients(payload)
+
 
             # RTSP still gets every frame regardless
             if _streamer is not None:
