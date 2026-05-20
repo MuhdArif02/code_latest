@@ -672,13 +672,51 @@
     connectWS();
   }
 
+  // ✅ ADD THIS NEW FUNCTION HERE (before connectWS)
+  function updateCameraFeed(d) {
+    if (d.frame) {
+      var img = document.getElementById('camFeed');
+      img.src = 'data:image/jpeg;base64,' + d.frame;
+      img.style.display = 'block';
+      document.getElementById('camWaiting').classList.add('hidden');
+      lastFrameImage = img.src;
+    }
+    var now = performance.now();
+    if (lastFrame !== null) {
+      fpsBuf.push(1000 / (now - lastFrame));
+      if (fpsBuf.length > 10) fpsBuf.shift();
+      var avg = fpsBuf.reduce(function(a,b){return a+b;},0) / fpsBuf.length;
+      document.getElementById('sbFps').textContent = avg.toFixed(1);
+    }
+    lastFrame = now;
+    document.getElementById('totalFrames').textContent = d.total_count || 0;
+    document.getElementById('passCount').textContent   = d.pass_count  || 0;
+    document.getElementById('rejectCount').textContent = d.reject_count|| 0;
+    document.getElementById('noCount').textContent     = d.no_count    || 0;
+  } 
+
   function connectWS() {
     var url = 'ws://' + location.hostname + ':' + WS_PORT + '/ws';
     ws = new WebSocket(url);
     ws.onopen    = function(){ setDot(true);  document.getElementById('sbWs').textContent = url; };
     ws.onclose   = function(){ setDot(false); setTimeout(connectWS, 2000); };
     ws.onerror   = function(){ setDot(false); };
-    ws.onmessage = function(e){ try{ updateDashboard(JSON.parse(e.data)); }catch(ex){} };
+    // ws.onmessage = function(e){ try{ updateDashboard(JSON.parse(e.data)); }catch(ex){} };
+    ws.onmessage = function(e){ 
+          try{ 
+              var d = JSON.parse(e.data);
+              
+              // Always update camera feed
+              if (d.frame) {
+                  updateCameraFeed(d);
+              }
+              
+              // Only update result panel when it's a real count
+              if (d.is_new_count) {
+                  updateDashboard(d);
+              }
+          } catch(ex){} 
+      };
   }
 
   function setDot(on) {
