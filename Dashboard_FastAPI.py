@@ -944,6 +944,7 @@ class InspectionProcessor(threading.Thread):
             # ✅ Always send frame (keeps camera feed alive)
             frame_payload = {
                 "timestamp": time.time(),
+                "frame": payload["frame"],   # ← put it back
                 "status": final_verdict,
                 "pass_count": self.qr_counter.pass_count,
                 "reject_count": self.qr_counter.reject_count,
@@ -953,20 +954,13 @@ class InspectionProcessor(threading.Thread):
             }
             send_payload_to_clients(frame_payload)
 
-            # if counted_now:
-            #     send_payload_to_clients(payload)  # this one still has frame inside
-
-            # send_payload_to_clients(payload)
             if counted_now:
-                send_payload_to_clients(payload)
+                send_payload_to_clients(payload)  # this one still has frame inside
 
             # RTSP still gets every frame regardless
             if _streamer is not None:
                 _streamer.write(display_frame)
 
-            # # Also push to RTSP streamer if running
-            # if _streamer is not None:
-            #     _streamer.write(display_frame)
 
             proc_ms = (time.perf_counter() - t0) * 1000.0
             self.last_proc_time  = proc_ms
