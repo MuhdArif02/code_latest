@@ -941,7 +941,13 @@ class InspectionProcessor(threading.Thread):
                 last_sent_verdict = final_verdict
                 payload["status"] = final_verdict
 
-            send_payload_to_clients(payload)
+            # send_payload_to_clients(payload)
+            if counted_now:
+                send_payload_to_clients(payload)
+
+            # RTSP still gets every frame regardless
+            if _streamer is not None:
+                _streamer.write(display_frame)
 
             # Also push to RTSP streamer if running
             if _streamer is not None:
