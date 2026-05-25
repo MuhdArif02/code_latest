@@ -69,7 +69,7 @@ ANGLE_PASS_MAX   = 35.0
 MIN_DYNAMIC_RANGE = 35
 MIN_SOLIDITY     = 0.75
 MIN_SIDE         = 45
-
+ZERODCE_PROCESS_SIZE = (320, 240)
 SMOOTH_WINDOW    = 3
 PASS_MAJORITY    = 2
 REJECT_MAJORITY  = 2
@@ -170,21 +170,39 @@ def get_zero_dce():
     return _zero_dce_model
 
 
-def apply_zero_dce(frame_bgr):
+
+# def apply_zero_dce(frame_bgr):
     """
     Run Zero-DCE on a BGR frame.
     Returns enhanced BGR frame (uint8).
     """
+    # model = get_zero_dce()
+    # # BGR → RGB, normalise to [0,1]
+    # rgb    = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+    # tensor = torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0)  # (1,3,H,W)
+    # with torch.no_grad():
+    #     enhanced = model(tensor)
+    # out = enhanced.squeeze().permute(1, 2, 0).numpy()
+    # out = np.clip(out * 255, 0, 255).astype(np.uint8)
+    # return cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
+def apply_zero_dce(frame_bgr):
     model = get_zero_dce()
-    # BGR → RGB, normalise to [0,1]
-    rgb    = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
-    tensor = torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0)  # (1,3,H,W)
-    with torch.no_grad():
+    h_orig, w_orig = frame_bgr.shape[:2]
+
+    # Resize DOWN before CNN — 4x faster
+    small = cv2.resize(frame_bgr, ZERODCE_PROCESS_SIZE)
+    rgb   = cv2.cvtColor(small, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+    tensor = torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0)
+
+    with torch.inference_mode():   # faster than no_grad
         enhanced = model(tensor)
+
     out = enhanced.squeeze().permute(1, 2, 0).numpy()
     out = np.clip(out * 255, 0, 255).astype(np.uint8)
-    return cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
+    out = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
 
+    # Resize back UP to original size
+    return cv2.resize(out, (w_orig, h_orig))
 
 # =========================================================
 # RETINEX  (unchanged from Method A)
