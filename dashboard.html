@@ -366,6 +366,7 @@
       <div class="sec">
         <div class="sec-title">Preprocessing</div>
         <div class="row"><span class="rl">Retinex</span><span class="tag tag-off" id="retinexTag">OFF</span></div>
+        <div class="row"><span class="rl">ZeroDCE</span><span class="tag tag-off" id="zerodceTag">OFF</span></div>
         <div class="row"><span class="rl">Brightness</span><span class="rv" id="brightness">—</span></div>
         <div class="row"><span class="rl">Contrast (σ)</span><span class="rv" id="contrast">—</span></div>
       </div>
@@ -616,6 +617,11 @@
     var rtag = document.getElementById('retinexTag');
     rtag.textContent = rx ? 'ON' : 'OFF';
     rtag.className   = 'tag ' + (rx ? 'tag-on' : 'tag-off');
+
+    var zd   = d.zerodce_used;
+    var ztag = document.getElementById('zerodceTag');
+    ztag.textContent = zd ? 'ON' : 'OFF';
+    ztag.className   = 'tag ' + (zd ? 'tag-on' : 'tag-off');
 
     document.getElementById('brightness').textContent =
       d.brightness != null ? d.brightness.toFixed(1) : '—';
