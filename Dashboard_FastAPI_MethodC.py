@@ -729,13 +729,27 @@ class InspectionProcessor(threading.Thread):
                 (0, 255, 255), 2
             )
 
-            # Show Zero-DCE indicator on display frame
-            if prep_info.get("zerodce_used"):
-                cv2.putText(
-                    display_frame, "Zero-DCE ON",
-                    (10, 25), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6, (0, 200, 255), 2
-                )
+            # Label left half — Entrance
+            cv2.putText(
+                display_frame, "Entrance",
+                (w_crop // 4 - 60, 35),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2
+            )
+
+            # Label right half — Area of Detection
+            cv2.putText(
+                display_frame, "Area of Detection",
+                (w_crop // 2 + 20, 35),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2
+            )
+
+            # # Show Zero-DCE indicator on display frame
+            # if prep_info.get("zerodce_used"):
+            #     cv2.putText(
+            #         display_frame, "Zero-DCE ON",
+            #         (10, 25), cv2.FONT_HERSHEY_SIMPLEX,
+            #         0.6, (0, 200, 255), 2
+            #     )
 
             display_verdict    = "NO"
             display_pts        = None
