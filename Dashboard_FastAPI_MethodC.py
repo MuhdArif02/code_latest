@@ -735,7 +735,12 @@ class InspectionProcessor(threading.Thread):
                 (w_crop // 4 - 60, 35),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2
             )
-
+            cv2.arrowedLine(
+            display_frame,
+            (w_crop // 4 + 70, 28),   # start point (after text)
+            (w_crop // 4 + 130, 28),  # end point (arrow tip)
+            (0, 255, 255), 2, tipLength=0.4
+            )
             # Label right half — Area of Detection
             cv2.putText(
                 display_frame, "Area of Detection",
