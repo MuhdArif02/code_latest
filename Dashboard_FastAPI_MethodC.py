@@ -510,6 +510,7 @@ class QRCountLoop:
         self.reject_count    = 0
         self.total_count     = 0
         self.no_qr_counter   = 0
+        self.no_count        = 0
         self.NO_QR_THRESHOLD = 3
 
     def update(self, verdict):
@@ -517,11 +518,13 @@ class QRCountLoop:
         if verdict == "NO":
             self.no_qr_counter += 1
             if self.no_qr_counter >= self.NO_QR_THRESHOLD:
+                self.no_count += 1
                 self.waiting_new_qr = True
             return counted_now
 
         if verdict in ["PASS", "REJECT"]:
             self.no_qr_counter = 0
+            self.no_count = 0
             if self.waiting_new_qr:
                 if verdict == "PASS":
                     self.pass_count += 1
@@ -824,6 +827,7 @@ class InspectionProcessor(threading.Thread):
             payload["pass_count"]    = self.qr_counter.pass_count
             payload["reject_count"]  = self.qr_counter.reject_count
             payload["total_count"]   = self.qr_counter.total_count
+            payload["no_count"] = self.qr_counter.no_count
 
             # Encode frame
             _, buffer = cv2.imencode(
