@@ -75,7 +75,9 @@ PASS_MAJORITY    = 2
 REJECT_MAJORITY  = 2
 
 WS_HOST = "0.0.0.0"
-WS_PORT = 8096          # ← different from Method A (8095)
+# WS_HOST = "192.168.100.157"
+WS_PORT = 8096  
+# WS_PORT = 1880        # ← different from Method A (8095)
 
 COLOR = {
     "PASS":   (0, 220, 80),
@@ -834,6 +836,13 @@ class InspectionProcessor(threading.Thread):
                 '.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60]
             )
             payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+
+            # if counted_now:
+            #     _, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+            #     payload["frame"] = base64.b64encode(buffer).decode('utf-8')
+            # else:
+            #     payload["frame"] = None
+
 
             send_payload_to_clients(payload)
 
