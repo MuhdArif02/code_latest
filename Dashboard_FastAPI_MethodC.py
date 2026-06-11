@@ -51,7 +51,7 @@ import subprocess
 # =========================================================
 # CONFIG  (identical to Method A — only port changed)
 # =========================================================
-USB_CAMERA_INDEX = 0
+USB_CAMERA_INDEX = 1
 USB_WIDTH        = 1280
 USB_HEIGHT       = 720
 USB_FPS          = 30
