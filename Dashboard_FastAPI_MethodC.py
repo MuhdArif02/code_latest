@@ -51,7 +51,7 @@ import subprocess
 # =========================================================
 # CONFIG  (identical to Method A — only port changed)
 # =========================================================
-USB_CAMERA_INDEX = 1
+USB_CAMERA_INDEX = 0
 USB_WIDTH        = 1280
 USB_HEIGHT       = 720
 USB_FPS          = 30
@@ -717,6 +717,7 @@ class InspectionProcessor(threading.Thread):
             # Step 2: right-half ROI (same as Method A)
             right_frame = crop_frame[:, w_crop * 1 // 2:]
 
+
             # Step 3: hybrid preprocessing (Zero-DCE + Retinex)
             enhanced_frame, gray, otsu, adap, prep_info = \
                 preprocess_variants(right_frame)
@@ -746,7 +747,7 @@ class InspectionProcessor(threading.Thread):
             (w_crop // 4 + 130, 28),  # end point (arrow tip)
             (0, 255, 255), 2, tipLength=0.4
             )
-            # Label right half — Area of Detection
+            # # Label right half — Area of Detection
             cv2.putText(
                 display_frame, "Area of Detection",
                 (w_crop // 2 + 20, 35),
